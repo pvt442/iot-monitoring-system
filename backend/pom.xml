@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
-    <artifactId>demo</artifactId>
+    <artifactId>iot-monitoring-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>demo</name>
-    <description>Demo project for Spring Boot</description>
+    <name>iot-monitoring-backend</name>
+    <description>IoT Data Server - Backend Spring Boot</description>
     <url/>
     <licenses>
         <license/>

@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Cấu hình cục bộ chứa mật khẩu
+application-local.properties

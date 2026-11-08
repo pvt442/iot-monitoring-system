@@ -1,0 +1,19 @@
+/* Riêng từng trang */
+.filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; align-items: end; margin-bottom: 16px; }
+.config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.setting-row:last-child { border-bottom: 0; }
+.setting-row b { display: block; font-weight: 600; }
+.setting-row small { color: var(--muted); }
+.scope-tag { display: inline-flex; margin-left: 8px; vertical-align: middle; }
+.stat-line { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.mini-stat { padding: 16px 18px; border-radius: 16px; background: linear-gradient(180deg, var(--card-2), var(--card)); border: 1px solid var(--line); }
+.mini-stat span { font-size: 12.5px; color: var(--muted); }
+.mini-stat b { display: block; margin-top: 4px; font-size: 28px; font-weight: 700; letter-spacing: -0.03em; }
+.active-alerts { display: grid; gap: 10px; margin-bottom: 16px; }
+.active-alert { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; background: rgba(240, 82, 82, 0.1); border: 1px solid rgba(240, 82, 82, 0.45); animation: pop-in 0.3s var(--ease) both; }
+.active-alert svg { width: 20px; height: 20px; color: var(--red); flex: none; }
+.active-alert p { color: var(--muted); font-size: 13px; }
+.active-alert b { font-weight: 600; }
+.form-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.note { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); color: var(--muted); font-size: 12.5px; line-height: 1.55; }

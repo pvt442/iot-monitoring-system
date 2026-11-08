@@ -1,0 +1,11 @@
+# Build / IDE
+node_modules/
+dist/
+target/
+out/
+.vscode/
+.idea/
+
+# Cấu hình cục bộ chứa mật khẩu
+application-local.properties
+.env

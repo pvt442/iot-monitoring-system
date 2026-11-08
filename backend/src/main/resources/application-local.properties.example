@@ -1,0 +1,2 @@
+# Sao chép file này thành application-local.properties rồi điền mật khẩu MySQL của bạn.
+spring.datasource.password=DAT_MAT_KHAU_MYSQL_CUA_BAN

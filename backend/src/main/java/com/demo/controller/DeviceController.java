@@ -2,34 +2,53 @@ package com.demo.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.demo.model.Device;
+import com.demo.dto.DeviceRequest;
+import com.demo.dto.DeviceResponse;
 import com.demo.service.DeviceService;
 
 @RestController
 @RequestMapping("/api/devices")
-@CrossOrigin("*") // Cực kỳ quan trọng: Cho phép ReactJS gọi API mà không bị chặn lỗi CORS
 public class DeviceController {
 
-    @Autowired
-    private DeviceService deviceService;
+    private final DeviceService deviceService;
 
-    // Cung cấp dữ liệu cho ReactJS hiển thị
+    public DeviceController(DeviceService deviceService) {
+        this.deviceService = deviceService;
+    }
+
+    /** Danh sách thiết bị kèm trạng thái Online/Offline. */
     @GetMapping
-    public List<Device> getAllDevices() {
+    public List<DeviceResponse> getAllDevices() {
         return deviceService.getAllDevices();
     }
 
-    // Nhận lệnh đăng ký thiết bị mới
+    @GetMapping("/{deviceId}")
+    public DeviceResponse getDevice(@PathVariable("deviceId") String deviceId) {
+        return deviceService.getDevice(deviceId);
+    }
+
+    /** Đăng ký thiết bị mới (201) hoặc cập nhật thiết bị đã có (200). */
     @PostMapping
-    public Device saveDevice(@RequestBody Device device) {
-        return deviceService.saveDevice(device);
+    public ResponseEntity<DeviceResponse> saveDevice(@RequestBody DeviceRequest request) {
+        DeviceService.SaveResult result = deviceService.saveDevice(request);
+        HttpStatus status = result.created() ? HttpStatus.CREATED : HttpStatus.OK;
+        return ResponseEntity.status(status).body(result.device());
+    }
+
+    /** Xóa thiết bị và toàn bộ dữ liệu liên quan. */
+    @DeleteMapping("/{deviceId}")
+    public ResponseEntity<Void> deleteDevice(@PathVariable("deviceId") String deviceId) {
+        deviceService.deleteDevice(deviceId);
+        return ResponseEntity.noContent().build();
     }
 }
