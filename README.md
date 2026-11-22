@@ -1,66 +1,130 @@
-# Pulse IoT – IoT Data Server
+# PULSE IoT – Hệ thống giám sát thiết bị IoT
 
+Hệ thống gộp **Backend Spring Boot + giao diện Desktop Java Swing + IoT Simulator** vào **một Maven/Java project duy nhất**. Khi mở bằng NetBeans, chỉ cần mở thư mục chứa `pom.xml` ở cấp gốc.
+
+## 1. Công nghệ
+
+- Java 21 cho toàn bộ mã nguồn.
+- Java Swing: giao diện Desktop (không dùng ReactJS, JavaScript, HTML, CSS, Node.js/npm).
+- Spring Boot + Spring Data JPA: REST API và xử lý nghiệp vụ.
+- MySQL 8+: lưu thiết bị, dữ liệu cảm biến, nhật ký cảnh báo và cấu hình.
+- Java HttpClient: IoT Simulator gửi dữ liệu qua HTTP.
+- Maven: quản lý thư viện và biên dịch một project.
+
+## 2. Cấu trúc project
+
+```text
+PULSE_IoT_JAVA_SWING_MOT_PROJECT/
+├── pom.xml                         # Chỉ một project Maven
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   ├── com/demo/            # Backend + IoT Simulator
+│   │   │   └── com/pulseiot/        # Frontend Java Swing
+│   │   └── resources/               # application.properties
+│   └── test/java/                   # Unit test
+├── data/sample.csv                  # Dữ liệu mẫu (nếu chọn chế độ CSV)
+├── client.properties                # Cấu hình IoT Simulator
+├── init.sql                         # Khởi tạo MySQL
+├── README.md
+├── HUONG_DAN_CAI_DAT_VA_VAN_HANH.md
+├── run-backend.bat
+├── run-desktop.bat
+├── run-simulator.bat
+├── start-all.bat
+└── stop-all.bat
 ```
-iot-monitoring-system/
-├── init.sql            ← MySQL: 4 bảng (devices, sensor_data, alert_logs, alert_config)
-├── backend/            ← Spring Boot (Java 21)  – cổng 8080      [Thành viên 1 – đã hoàn thiện lại]
-├── iot-client/         ← Java IoT Client Simulator               [Thành viên 2 – Phần 1]
-└── frontend/           ← React + Vite Dashboard "Pulse IoT" – cổng 5173   [Thành viên 2 – Phần 2]
+
+## 3. Chuẩn bị
+
+1. Cài JDK 21 và Apache Maven 3.9+; kiểm tra `java -version`, `mvn -version`.
+2. Cài và khởi động MySQL 8+.
+3. Mở `init.sql` bằng MySQL Workbench và chạy để tạo database `iot_monitoring`.
+4. Mở `src/main/resources/application.properties`. Mặc định: host `localhost:3306`, database `iot_monitoring`, user `root`, mật khẩu rỗng. Nếu có mật khẩu, đặt biến môi trường `DB_PASSWORD`.
+5. Mở thư mục gốc project bằng NetBeans: **File → Open Project → chọn thư mục có pom.xml**. NetBeans chỉ nhận một project Maven.
+
+## 4. Cách chạy
+
+### Cách A – chạy từng phần (khuyến nghị)
+
+Mở terminal tại thư mục gốc project.
+
+**1) Backend:**
+
+```bash
+mvn spring-boot:run
 ```
 
-## 1. Các lưu ý khi khởi chạy
+Backend chạy tại `http://localhost:8080`.
 
-1. Xóa thư mục `backend/target` cũ rồi build lại.
-2. **Mật khẩu MySQL** không còn nằm trong `application.properties`. Đặt biến môi trường `DB_PASSWORD`
-   _hoặc_ sao chép `backend/src/main/resources/application-local.properties.example` → `application-local.properties` và điền mật khẩu (file này đã được `.gitignore`).
+**2) IoT Simulator:** mở terminal thứ hai:
 
-## 2. Chạy hệ thống (thứ tự)
+```bash
+mvn -Dexec.mainClass=com.demo.client.ClientApp exec:java
+```
 
-| Bước           | Lệnh                                                                         |
-| -------------- | ---------------------------------------------------------------------------- |
-| MySQL + schema | `mysql -u root -p < init.sql`                                                |
-| Backend        | `cd backend && ./mvnw spring-boot:run` (Windows: `mvnw.cmd spring-boot:run`) |
-| IoT Client     | `cd iot-client && run.bat` (Linux/macOS: `./run.sh`)                         |
-| Web            | `cd frontend && npm install && npm run dev` → mở http://localhost:5173       |
+Simulator đọc cấu hình từ `client.properties` ở thư mục gốc. Có thể truyền tham số:
 
-Client tự đăng ký DEV_01..DEV_03 nên không cần gọi `POST /api/devices` bằng tay.
+```bash
+mvn -Dexec.mainClass=com.demo.client.ClientApp -Dexec.args="--server=http://localhost:8080 --interval=3000 --devices=DEV_01,DEV_02" exec:java
+```
 
-## 3. Backend đã bổ sung
+**3) Giao diện Java Swing:** mở terminal thứ ba:
 
-- **Kiểm tra dữ liệu**: thiếu deviceId/temperature/humidity → 400; nhiệt độ ngoài −40…125 °C, độ ẩm ngoài 0…100 % → 400; thiết bị chưa đăng ký → 404; lỗi trả JSON `{timestamp,status,error,message}`.
-- **Cảnh báo cả nhiệt độ lẫn độ ẩm** (`>` ngưỡng = CRITICAL; vùng sát ngưỡng = WARNING), có nhật ký bền vững trong `alert_logs`, chỉ ghi khi chỉ số _mới_ vượt ngưỡng (không spam).
-- **Cấu hình ngưỡng lưu MySQL** (`alert_config`): `GET/PUT /api/config`, `POST /api/config/reset`.
-- **Online/Offline**: cột `devices.last_seen` cập nhật mỗi lần nhận dữ liệu; Offline khi quá `offlineTimeoutSeconds` (mặc định 15 s).
-- **Lọc + phân trang**: `from`, `to`, `limit`, `/search?page&size`.
-- **Tương thích ngược**: vẫn nhận payload cũ `{"device":{"deviceId":"DEV_01"},...}`; response có cả `deviceId` (phẳng) lẫn `device.deviceId` (lồng); các endpoint cũ giữ nguyên đường dẫn.
-- CORS cấu hình chung cho `/api/**`; xóa thiết bị `DELETE /api/devices/{id}`; `GET /api/dashboard/overview` gom dữ liệu Dashboard trong 1 lần gọi.
+```bash
+mvn -Dexec.mainClass=com.pulseiot.desktop.PulseIoTApplication exec:java
+```
 
-### Danh sách API
+Hoặc chạy `mvn exec:java` vì main class mặc định của exec plugin là giao diện Swing.
 
-| Method        | Endpoint                                             | Ghi chú                                    |
-| ------------- | ---------------------------------------------------- | ------------------------------------------ |
-| POST          | `/api/sensor-data`                                   | 201 + `alertStatus`, `alerts[]`            |
-| GET           | `/api/sensor-data?deviceId&from&to&limit`            | mới nhất trước (mặc định 500, tối đa 5000) |
-| GET           | `/api/sensor-data/search?deviceId&from&to&page&size` | phân trang                                 |
-| GET           | `/api/sensor-data/{id}/history?from&to&limit`        | vẽ biểu đồ                                 |
-| GET           | `/api/sensor-data/{id}/latest`                       | 404 nếu chưa có dữ liệu                    |
-| GET/POST      | `/api/devices`                                       | POST = thêm/cập nhật (201/200)             |
-| GET/DELETE    | `/api/devices/{id}`                                  |                                            |
-| GET           | `/api/alerts?deviceId&metric&page&size`              | nhật ký cảnh báo                           |
-| GET/PUT, POST | `/api/config`, `/api/config/reset`                   | ngưỡng + timeout                           |
-| GET           | `/api/dashboard/overview`, `/api/health`             |                                            |
+### Cách B – chạy bằng file BAT (Windows)
 
-Thời gian dùng ISO 8601 theo giờ Server, ví dụ `2026-11-07T14:35:02.123`.
+- `run-backend.bat`: chạy Backend.
+- `run-simulator.bat`: chạy IoT Simulator.
+- `run-desktop.bat`: chạy giao diện Swing.
+- `start-all.bat`: mở cả ba cửa sổ tiến trình. MySQL phải chạy trước.
+- `stop-all.bat`: đóng các cửa sổ đã mở từ launcher.
 
-## 4. Kịch bản demo
+## 5. Chức năng
 
-1. Chạy 3 thành phần → Dashboard hiện 3 thiết bị Online, biểu đồ chạy.
-2. Trong cửa sổ IoT Client gõ `spike DEV_01 both` → số đo tăng dần: **Sắp vượt ngưỡng → Vượt ngưỡng**, thẻ đỏ + toast + dòng mới ở _Alert Logs_.
-3. `normal all` → trở về bình thường. `offline DEV_02` → sau 15 s thiết bị chuyển **Offline**. Tắt Backend → banner "Mất kết nối Server".
+- Dashboard: thẻ tổng quan, đồng hồ nhiệt độ/độ ẩm dạng vòng cung, thiết bị đang chọn và biểu đồ xu hướng.
+- Devices: danh sách thiết bị, số đo mới nhất, trạng thái kết nối, thêm và xóa.
+- Lịch sử cảm biến: lọc theo thiết bị/thời gian, phân trang, xuất CSV.
+- Alert Logs: lọc theo thiết bị/chỉ số, xem giá trị đo và ngưỡng cảnh báo.
+- Configuration: chỉnh ngưỡng nhiệt độ/độ ẩm, biên cảnh báo và timeout Offline.
+- IoT Simulator: sinh dữ liệu nhiệt độ/độ ẩm và gửi liên tục lên Backend.
 
-## 5. Lưu ý trung thực (quan trọng khi báo cáo)
+## 6. Kiểm tra và đóng project
 
-- Dữ liệu là **mô phỏng** bởi Client, không phải cảm biến vật lý.
-- Cập nhật Dashboard bằng **HTTP Polling** (mặc định 2 s, chỉnh ở Configuration); chưa dùng WebSocket.
-- Ngưỡng/timeout lưu trong **MySQL**; chu kỳ polling và bật/tắt toast chỉ lưu **LocalStorage** của trình duyệt.
-- Chưa có đăng nhập/phân quyền.
+Biên dịch toàn bộ:
+
+```bash
+mvn clean package
+```
+
+Chạy kiểm thử:
+
+```bash
+mvn test
+```
+
+Dừng tiến trình chạy trong terminal bằng `Ctrl + C` hoặc nút Stop trong NetBeans. MySQL không bị dừng theo.
+
+## 7. Xử lý lỗi thường gặp
+
+| Lỗi                                | Cách xử lý                                                                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `mvn is not recognized`            | Cài Maven, thêm `bin` vào PATH, mở terminal mới.                                                                         |
+| `Unsupported class file / release` | Đảm bảo NetBeans/Maven đang dùng JDK 21.                                                                                 |
+| Backend không kết nối MySQL        | Kiểm tra MySQL, cổng 3306, database và `DB_USERNAME`/`DB_PASSWORD`.                                                      |
+| Swing không kết nối được Server    | Chạy Backend trước, kiểm tra địa chỉ API `http://localhost:8080`.                                                        |
+| Không có dữ liệu                   | Chạy Simulator và kiểm tra cửa sổ log.                                                                                   |
+| Port 8080 đang được dùng           | Dừng tiến trình đang chiếm cổng hoặc đổi `server.port` trong `application.properties`; đồng bộ URL ở Simulator và Swing. |
+
+## 8. Giao diện Desktop
+
+Giao diện Java Swing sử dụng tông màu tối xanh than, thanh điều hướng bên trái, thẻ thống kê, đồng hồ đo dạng vòng cung, biểu đồ và bảng dữ liệu. Nội dung trên màn hình được rút gọn, ưu tiên tên mục, số liệu và trạng thái.
+
+## 9. Quy ước quan trọng
+
+Đây là **một project Java/Maven**. Các package vẫn được tách theo nhiệm vụ để mã nguồn dễ quản lý: `com.demo` cho Backend/Simulator và `com.pulseiot.desktop` cho Swing.

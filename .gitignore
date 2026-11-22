@@ -1,11 +1,8 @@
-# Build / IDE
-node_modules/
-dist/
 target/
-out/
-.vscode/
-.idea/
-
-# Cấu hình cục bộ chứa mật khẩu
+*.class
+*.log
 application-local.properties
-.env
+.idea/
+.nbproject/private/
+nbproject/private/
+.DS_Store
