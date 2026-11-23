@@ -2,5 +2,9 @@
 chcp 65001 >nul
 cd /d "%~dp0"
 echo PULSE IoT - BACKEND
-mvn spring-boot:run
+if exist ".\mvnw.cmd" (
+    call .\mvnw.cmd spring-boot:run
+) else (
+    call mvn spring-boot:run
+)
 pause
